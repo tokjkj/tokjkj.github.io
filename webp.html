@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Image WebP Convert</title>
+  <style>
+      * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Pretendard', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    margin: 0;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #e3f2fd, #f9f9f9);
+  }
+
+  h2 {
+    margin-bottom: 10px;
+    color: #333;
+    font-size: 1.8rem;
+    letter-spacing: -0.3px;
+  }
+
+  p {
+    color: #555;
+    margin-bottom: 25px;
+    font-size: 1rem;
+  }
+
+  input[type="file"] {
+    background: #ffffffb3;
+    border: 2px dashed #90caf9;
+    padding: 20px 30px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.3s ease;
+    font-size: 0.95rem;
+    color: #333;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  input[type="file"]:hover {
+    background: #e3f2fd;
+    border-color: #42a5f5;
+  }
+
+  .preview {
+    margin-top: 30px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .preview img {
+    max-width: 100%;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    padding: 6px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .size-info {
+    font-size: 0.95rem;
+    color: #333;
+    margin-top: 15px;
+    line-height: 1.5;
+  }
+
+  .highlight {
+    font-weight: 600;
+    color: #0077cc;
+  }
+
+  .download {
+    margin-top: 20px;
+    display: inline-block;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #203359, #273757);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: 0.3s;
+    font-weight: 500;
+    box-shadow: 0 4px 10px #0D1826;
+  }
+
+  .download:hover {
+    background: linear-gradient(135deg, #203359, #273757);
+    box-shadow: 0 6px 12px #0D1826;
+  }
+
+  @media (max-width: 600px) {
+    body {
+      padding: 20px 10px;
+    }
+    h2 {
+      font-size: 1.5rem;
+    }
+    .preview {
+      padding: 15px;
+    }
+  }
+
+  </style>
+</head>
+<body>
+  <h2>🖼️ Image WebP Convert</h2>
+  <p>JPG/PNG 이미지를 업로드하면 WebP로 변환합니다.</p>
+  
+  <input type="file" id="upload" accept="image/*">
+  <div class="preview" id="preview"></div>
+
+  <script>
+  function formatBytes(bytes) {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return (bytes / Math.pow(k, i)).toFixed(2) + " " + sizes[i];
+  }
+
+  document.getElementById("upload").addEventListener("change", function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.src = e.target.result;
+
+      img.onload = function() {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+
+        // WebP 변환
+        const webpDataUrl = canvas.toDataURL("image/webp", 0.8);
+
+        // Base64 → Binary 변환
+        const byteString = atob(webpDataUrl.split(',')[1]);
+        const arrayBuffer = new ArrayBuffer(byteString.length);
+        const intArray = new Uint8Array(arrayBuffer);
+        for (let i = 0; i < byteString.length; i++) {
+          intArray[i] = byteString.charCodeAt(i);
+        }
+
+        // 용량 계산
+        const originalSize = file.size;
+        const newSize = intArray.length;
+        const reduction = ((1 - newSize / originalSize) * 100).toFixed(1);
+
+        // 미리보기 영역 업데이트
+        const preview = document.getElementById("preview");
+        preview.innerHTML = "";
+
+        const previewImg = document.createElement("img");
+        previewImg.src = webpDataUrl;
+        preview.appendChild(previewImg);
+
+        const info = document.createElement("div");
+        info.className = "size-info";
+        info.innerHTML = `
+          원본 크기: ${formatBytes(originalSize)}<br>
+          변환 크기: ${formatBytes(newSize)}<br>
+          절감률: <span class="highlight">${reduction}%</span>
+        `;
+        preview.appendChild(info);
+
+        // 자동 다운로드 실행
+        const link = document.createElement("a");
+        link.href = webpDataUrl;
+        link.download = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      };
+    };
+    reader.readAsDataURL(file);
+  });
+</script>
+
+</body>
+</html>
