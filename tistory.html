@@ -154,7 +154,11 @@
         });
       });
 
-      return doc.body.innerHTML.trim();
+      let result = doc.body.innerHTML.trim();
+
+      result = result.replace(/\(\[.*?\]\)/g, '');
+
+      return result;
     }
 
     function copyToClipboard(text) {
@@ -169,3 +173,4 @@
   </script>
 </body>
 </html>
+
