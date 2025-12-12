@@ -131,7 +131,7 @@
         h1.replaceWith(h2);
         });
 
-        /* 2) <p><img></p> → <center><img></center> */
+        /* 2) <p><img></p> → <center><img></center> 
         doc.querySelectorAll("p > img").forEach(img => {
         const p = img.parentElement;
 
@@ -140,6 +140,7 @@
 
         p.replaceWith(center);
         });
+        */
 
         /* 3) a 태그 → 버튼 스타일 + center로 감싸기 (href 유지) */
         const BTN_STYLE = `
