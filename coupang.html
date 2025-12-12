@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Coupang HTML Convert</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: '맑은 고딕', 'Pretendard', sans-serif;
+      background: linear-gradient(135deg, #ece9e6, #ffffff);
+    }
+    header {
+      text-align: center;
+      background: #203359;
+      color: #fff;
+      padding: 1rem;
+      font-size: 1.2rem;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      position: relative;
+    }
+    #copyMessage {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #04ADBF;
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1s ease;
+      z-index: 1000;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+    #copyMessage.show {
+      opacity: 1;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      padding: 1rem;
+      gap: 1rem;
+    }
+    textarea {
+      width: 50%;
+      height: 760px;
+      border: none;
+      outline: none;
+      padding: 1rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      resize: none;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      overflow-y: auto;
+    }
+    pre {
+      width: 50%;
+      height: 760px;
+      margin: 0;
+      padding: 1rem;
+      border-radius: 12px;
+      background: #ffffff;
+      overflow: auto;
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+    footer {
+      text-align: center;
+      padding: 0.5rem;
+      font-size: 0.85rem;
+      color: #666;
+      background: #f4f4f4;
+      border-top: 1px solid #ddd;
+    }
+    @media (max-width: 900px) {
+      main {
+        flex-direction: column;
+      }
+      textarea, pre {
+        width: 100%;
+        height: 50%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>🧩 Coupang HTML Convert</header>
+  <div id="copyMessage">📋 변환된 코드가 클립보드에 복사되었습니다!</div>
+  <main>
+    <textarea id="input" placeholder="여기에 HTML 코드를 입력하세요"></textarea>
+    <pre id="output"></pre>
+  </main>
+  <footer>© 2025 Coupang HTML Convert</footer>
+
+  <script>
+    const input = document.getElementById("input");
+    const output = document.getElementById("output");
+    const copyMessage = document.getElementById("copyMessage");
+
+    input.addEventListener("input", () => {
+      const html = input.value;
+      const transformed = transformHTML(html);
+      output.textContent = transformed;
+
+      // 변환 결과 클립보드 복사
+      copyToClipboard(transformed);
+    });
+
+    function transformHTML(html) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+
+      /* 1) h1 -> h2 data-ke-size="size26" */
+        doc.querySelectorAll("h1").forEach(h1 => {
+        const h2 = doc.createElement("h2");
+        h2.setAttribute("data-ke-size", "size26");
+        h2.innerHTML = h1.innerHTML;
+        h1.replaceWith(h2);
+        });
+
+        /* 2) <p><img></p> → <center><img></center> */
+        doc.querySelectorAll("p > img").forEach(img => {
+        const p = img.parentElement;
+
+        const center = doc.createElement("center");
+        center.appendChild(img.cloneNode(true));
+
+        p.replaceWith(center);
+        });
+
+        /* 3) a 태그 → 버튼 스타일 + center로 감싸기 (href 유지) */
+        const BTN_STYLE = `
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        padding:10px 26px;
+        border-radius:9999px;
+        color:#fff;
+        font-weight:bold;
+        font-size:16px;
+        letter-spacing:-0.2px;
+        text-decoration:none;
+        background:linear-gradient(180deg,#2f6bff 0%,#1f57f3 100%);
+        `.trim();
+
+        doc.querySelectorAll("a").forEach(a => {
+        // 이미 center 안에 있는 a 는 제외 (중복 방지)
+        if (a.closest("center")) return;
+
+        const href = a.getAttribute("href") || "";
+        const html = a.innerHTML;
+
+        const newA = doc.createElement("a");
+        newA.setAttribute("href", href);
+        newA.setAttribute("role", "button");
+        newA.setAttribute("style", BTN_STYLE);
+        newA.innerHTML = html;
+
+        const center = doc.createElement("center");
+        center.appendChild(newA);
+
+        a.replaceWith(center);
+        });
+
+      let result = doc.body.innerHTML.trim();
+
+      result = result.replace(/\(\[.*?\]\)/g, '');
+
+      return result;
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        // ✅ 복사 메시지 표시 후 서서히 사라지기
+        copyMessage.classList.add("show");
+        setTimeout(() => copyMessage.classList.remove("show"), 2000);
+      }).catch(err => {
+        console.error("클립보드 복사 실패:", err);
+      });
+    }
+  </script>
+</body>
+</html>
