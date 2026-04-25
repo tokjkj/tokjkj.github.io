@@ -154,9 +154,41 @@
         });
       });
 
+      // ✅ h2 처리 로직 추가
+      const h2Elements = doc.querySelectorAll("h2");
+
+      h2Elements.forEach(h2 => {
+        // 1️⃣ h2 내부를 <b>로 감싸기 (이미 b 있으면 중복 방지)
+        if (!h2.querySelector("b")) {
+          const b = doc.createElement("b");
+          b.innerHTML = h2.innerHTML;
+          h2.innerHTML = "";
+          h2.appendChild(b);
+        }
+
+        // 2️⃣ h2 위에 공백 p 태그 추가 (중복 방지)
+        const prev = h2.previousElementSibling;
+        if (
+          !prev ||
+          !(prev.tagName === "P" && prev.getAttribute("data-ke-size") === "size16")
+        ) {
+          const p = doc.createElement("p");
+          p.setAttribute("data-ke-size", "size16");
+          p.innerHTML = "&nbsp;";
+          h2.parentNode.insertBefore(p, h2);
+        }
+      });
+
       let result = doc.body.innerHTML.trim();
 
       result = result.replace(/\(\[.*?\]\)/g, '');
+
+      // ✅ 마지막에 hr 추가 (중복 방지)
+      const hrTag = '<hr contenteditable="false" data-ke-type="horizontalRule" data-ke-style="style2" />';
+
+      if (!result.endsWith(hrTag)) {
+        result += '\n' + hrTag;
+      }
 
       return result;
     }
